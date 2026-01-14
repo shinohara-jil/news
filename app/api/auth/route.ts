@@ -23,9 +23,10 @@ export async function GET() {
     redirectUri
   );
 
-  // スコープを設定（スプレッドシートの読み書き）
+  // スコープを設定（スプレッドシートの読み書き + Google Drive）
   const scopes = [
     'https://www.googleapis.com/auth/spreadsheets',
+    'https://www.googleapis.com/auth/drive.file', // Google Driveへのファイルアップロード
   ];
 
   const authUrl = oauth2Client.generateAuthUrl({

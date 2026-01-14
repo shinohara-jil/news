@@ -234,16 +234,22 @@ export default function Home() {
                 className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden"
               >
                 {/* 画像 */}
-                {item.ogpImage && !item.ogpImage.includes('googleusercontent.com') ? (
+                {item.ogpImage ? (
                   <div className="w-full h-48 bg-gray-200 overflow-hidden">
                     <img
                       src={item.ogpImage}
                       alt={item.title}
                       className="w-full h-full object-cover"
+                      loading="lazy"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                        (e.target as HTMLImageElement).parentElement!.classList.add('bg-gradient-to-br', 'from-blue-400', 'to-purple-500', 'flex', 'items-center', 'justify-center');
-                        (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="text-white text-4xl">📰</span>';
+                        // エラー時はフォールバック画像を表示
+                        const img = e.target as HTMLImageElement;
+                        img.style.display = 'none';
+                        const parent = img.parentElement;
+                        if (parent) {
+                          parent.className = 'w-full h-48 bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center';
+                          parent.innerHTML = '<span class="text-white text-4xl">📰</span>';
+                        }
                       }}
                     />
                   </div>

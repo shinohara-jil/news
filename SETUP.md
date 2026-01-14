@@ -16,6 +16,15 @@
 3. 「Google Sheets API」をクリック
 4. 「有効にする」ボタンをクリック
 
+### Step 2-2: Google Drive APIの有効化（画像アップロード用）
+1. 左側メニューから「APIとサービス」→「ライブラリ」を選択
+2. 検索バーで「Google Drive API」を検索
+3. 「Google Drive API」をクリック
+4. 「有効にする」ボタンをクリック
+   - または、直接以下のURLにアクセスして有効化：
+   - `https://console.developers.google.com/apis/api/drive.googleapis.com/overview?project=YOUR_PROJECT_ID`
+   - `YOUR_PROJECT_ID`を自分のプロジェクトIDに置き換えてください
+
 ### Step 3: 認証情報の作成
 1. 左側メニューから「APIとサービス」→「認証情報」を選択
 2. 画面上部の「認証情報を作成」をクリック
