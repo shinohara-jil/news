@@ -231,24 +231,47 @@ export default function Home() {
                 href={item.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-5"
+                className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden"
               >
-                {/* カテゴリ */}
-                <div className="mb-3">
-                  <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${getCategoryColor(item.category)}`}>
-                    {item.category}
-                  </span>
-                </div>
+                {/* 画像 */}
+                {item.ogpImage && !item.ogpImage.includes('googleusercontent.com') ? (
+                  <div className="w-full h-48 bg-gray-200 overflow-hidden">
+                    <img
+                      src={item.ogpImage}
+                      alt={item.title}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                        (e.target as HTMLImageElement).parentElement!.classList.add('bg-gradient-to-br', 'from-blue-400', 'to-purple-500', 'flex', 'items-center', 'justify-center');
+                        (e.target as HTMLImageElement).parentElement!.innerHTML = '<span class="text-white text-4xl">📰</span>';
+                      }}
+                    />
+                  </div>
+                ) : (
+                  <div className="w-full h-48 bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
+                    <span className="text-white text-4xl">📰</span>
+                  </div>
+                )}
 
-                {/* タイトル */}
-                <h2 className="text-lg font-bold text-gray-900 mb-3 line-clamp-2">
-                  {item.title}
-                </h2>
+                {/* カード内容 */}
+                <div className="p-5">
+                  {/* カテゴリ */}
+                  <div className="mb-3">
+                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${getCategoryColor(item.category)}`}>
+                      {item.category}
+                    </span>
+                  </div>
 
-                {/* 日付 */}
-                <div className="flex items-center text-xs text-gray-500">
-                  <span>📅</span>
-                  <span className="ml-1">{formatDate(item.pubDate)}</span>
+                  {/* タイトル */}
+                  <h2 className="text-lg font-bold text-gray-900 mb-3 line-clamp-2">
+                    {item.title}
+                  </h2>
+
+                  {/* 日付 */}
+                  <div className="flex items-center text-xs text-gray-500">
+                    <span>📅</span>
+                    <span className="ml-1">{formatDate(item.pubDate)}</span>
+                  </div>
                 </div>
               </a>
             ))}
