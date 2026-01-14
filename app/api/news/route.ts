@@ -4,6 +4,9 @@
 import { NextResponse } from 'next/server';
 import { readNewsFromSheet } from '@/lib/sheets-read';
 
+// キャッシュ設定: 60秒間キャッシュ（本番環境では効果的）
+export const revalidate = 60;
+
 export async function GET() {
   try {
     // 環境変数のチェック
@@ -16,11 +19,16 @@ export async function GET() {
 
     const newsData = await readNewsFromSheet();
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       count: newsData.length,
       data: newsData,
     });
+
+    // キャッシュヘッダーを設定（60秒間キャッシュ）
+    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+
+    return response;
   } catch (error) {
     console.error('エラー:', error);
     return NextResponse.json(

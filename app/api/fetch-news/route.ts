@@ -102,8 +102,10 @@ export async function GET() {
         console.log(`  解決後のURL: ${actualLink}`);
       }
       
-      // カテゴリを分類
-      const category = classifyNewsCategory(item.title);
+      // カテゴリを分類（Gemini 2.5 Flashを使用）
+      console.log(`  カテゴリ分類中...`);
+      const category = await classifyNewsCategory(item.title, item.description);
+      console.log(`  分類結果: ${category}`);
 
       // Gemini APIで画像を生成（優先）
       let generatedImageUrl: string | null = null;

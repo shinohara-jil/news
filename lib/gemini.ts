@@ -16,7 +16,7 @@ export async function generateImageWithGemini(title: string): Promise<string | n
   }
 
   try {
-    const prompt = `「${title}」のニュース記事のトップページに載せるのにふさわしい画像を作成してください。日本語の文字等は入れないこと。`;
+    const prompt = `「${title}」のニュース記事のトップページに載せるのにふさわしい画像を、手書き風のイラストで作成してください。日本語の文字等は入れないこと。`;
 
     // Gemini API v1beta エンドポイント
     // 公式ドキュメント: https://ai.google.dev/gemini-api/docs/image-generation
