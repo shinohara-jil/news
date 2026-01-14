@@ -5,8 +5,7 @@
 import { NextResponse } from 'next/server';
 import { fetchGoogleNewsRSS } from '@/lib/rss';
 import { fetchOGPImage, resolveGoogleNewsUrl } from '@/lib/ogp';
-// カテゴリ分類は一旦無効化
-// import { classifyNewsCategory } from '@/lib/classify';
+import { classifyNewsCategory } from '@/lib/classify';
 import { saveNewsToSheet, type NewsData } from '@/lib/sheets';
 import { readNewsFromSheet } from '@/lib/sheets-read';
 import { generateImageWithGemini } from '@/lib/gemini';
@@ -24,11 +23,9 @@ export async function GET() {
       );
     }
 
+    // GEMINI_API_KEYのチェック（画像生成に必要だが、警告のみで続行）
     if (!process.env.GEMINI_API_KEY) {
-      return NextResponse.json(
-        { error: 'GEMINI_API_KEYが設定されていません' },
-        { status: 500 }
-      );
+      console.warn('⚠️ GEMINI_API_KEYが設定されていません。画像生成はスキップされます。');
     }
 
     console.log('ニュース取得を開始...');
@@ -122,46 +119,56 @@ export async function GET() {
         console.log(`  解決後のURL: ${actualLink}`);
       }
       
-      // カテゴリは「その他」をデフォルトで設定（分類APIは無効化）
-      const category = 'その他';
+      // カテゴリを分類（Gemini 2.5 Flashを使用）
+      console.log(`  カテゴリ分類中...`);
+      const category = await classifyNewsCategory(item.title, item.description);
+      console.log(`  ✓ 分類結果: ${category}`);
 
       // Gemini APIで画像を生成（優先）
       let generatedImageUrl: string | null = null;
-      try {
-        console.log(`\n========== 画像生成開始: ${item.title} ==========`);
-        const imageData = await generateImageWithGemini(item.title);
-        
-        if (imageData) {
-          console.log(`✓ 画像データ取得成功（base64長: ${imageData.length}）`);
-          // ファイル名を生成（タイトルから安全なファイル名を作成）
-          const safeFileName = item.title
-            .replace(/[^a-zA-Z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/g, '_')
-            .substring(0, 50) + '_' + Date.now() + '.png';
+      
+      // GEMINI_API_KEYの確認
+      if (!process.env.GEMINI_API_KEY) {
+        console.warn(`⚠️ GEMINI_API_KEYが設定されていません。画像生成をスキップします。`);
+      } else {
+        try {
+          console.log(`\n========== 画像生成開始: ${item.title} ==========`);
+          console.log(`タイトル: ${item.title.substring(0, 100)}...`);
           
-          console.log(`→ Google Driveにアップロード中: ${safeFileName}`);
-          // Google Driveにアップロード
-          generatedImageUrl = await uploadImageToDrive(imageData, safeFileName);
-          console.log(`✓ 画像生成・アップロード成功: ${generatedImageUrl}`);
-          console.log(`========== 画像生成完了 ==========\n`);
-        } else {
-          console.warn(`✗ 画像データがnullでした`);
-          console.log(`========== 画像生成失敗（null） ==========\n`);
-        }
-      } catch (error) {
-        console.error(`\n✗✗✗ 画像生成エラー ✗✗✗`);
-        console.error(`記事タイトル: ${item.title}`);
-        if (error instanceof Error) {
-          console.error(`エラーメッセージ: ${error.message}`);
-          // スタックトレースは最初の数行だけ表示
-          if (error.stack) {
-            const stackLines = error.stack.split('\n').slice(0, 3);
-            console.error(`エラー位置: ${stackLines.join('\n')}`);
+          const imageData = await generateImageWithGemini(item.title);
+          
+          if (imageData) {
+            console.log(`✓ 画像データ取得成功（base64長: ${imageData.length}）`);
+            // ファイル名を生成（タイトルから安全なファイル名を作成）
+            const safeFileName = item.title
+              .replace(/[^a-zA-Z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/g, '_')
+              .substring(0, 50) + '_' + Date.now() + '.png';
+            
+            console.log(`→ Google Driveにアップロード中: ${safeFileName}`);
+            // Google Driveにアップロード
+            generatedImageUrl = await uploadImageToDrive(imageData, safeFileName);
+            console.log(`✓ 画像生成・アップロード成功: ${generatedImageUrl}`);
+            console.log(`========== 画像生成完了 ==========\n`);
+          } else {
+            console.warn(`✗ 画像データがnullでした`);
+            console.log(`========== 画像生成失敗（null） ==========\n`);
           }
-        } else {
-          console.error(`エラーオブジェクト:`, error);
+        } catch (error) {
+          console.error(`\n✗✗✗ 画像生成エラー ✗✗✗`);
+          console.error(`記事タイトル: ${item.title}`);
+          if (error instanceof Error) {
+            console.error(`エラーメッセージ: ${error.message}`);
+            // スタックトレースは最初の数行だけ表示
+            if (error.stack) {
+              const stackLines = error.stack.split('\n').slice(0, 5);
+              console.error(`エラー位置:\n${stackLines.join('\n')}`);
+            }
+          } else {
+            console.error(`エラーオブジェクト:`, error);
+          }
+          console.error(`→ OGP画像を取得します`);
+          console.error(`========== 画像生成エラー終了 ==========\n`);
         }
-        console.error(`→ OGP画像を取得します`);
-        console.error(`========== 画像生成エラー終了 ==========\n`);
       }
 
       // 生成画像が取得できなかった場合のみ、OGP画像を取得（フォールバック）

@@ -137,8 +137,7 @@ type SortByCategory =
   | '動画生成AI' 
   | '新規企業向けサービス' 
   | '新規BtoCサービス' 
-  | 'HRサービス' 
-  | 'その他';
+  | 'HRサービス';
 type SortByWeek = 'all' | '今週' | '先週' | '2週間前' | '3週間前' | 'それ以前';
 
 export default function Home() {
@@ -370,7 +369,6 @@ export default function Home() {
                 <option value="新規企業向けサービス">新規企業向けサービス</option>
                 <option value="新規BtoCサービス">新規BtoCサービス</option>
                 <option value="HRサービス">HRサービス</option>
-                <option value="その他">その他</option>
               </select>
             </div>
 
