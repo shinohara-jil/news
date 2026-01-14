@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 interface NewsItem {
   title: string;
@@ -11,12 +11,17 @@ interface NewsItem {
   category: string;
 }
 
+type SortByCategory = 'all' | '言語生成AI' | '画像生成AI' | '動画生成AI' | 'その他';
+type SortByWeek = 'all' | '今週' | '先週' | '2週間前' | '3週間前' | 'それ以前';
+
 export default function Home() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fetchLoading, setFetchLoading] = useState(false);
   const [fetchResult, setFetchResult] = useState<string | null>(null);
+  const [sortByCategory, setSortByCategory] = useState<SortByCategory>('all');
+  const [sortByWeek, setSortByWeek] = useState<SortByWeek>('all');
 
   // ニュースデータを取得
   useEffect(() => {
@@ -91,6 +96,49 @@ export default function Home() {
     }
   };
 
+  // 週単位の分類を取得
+  const getWeekCategory = (dateString: string): SortByWeek => {
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffTime = now.getTime() - date.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays < 0) return '今週'; // 未来の日付
+      if (diffDays <= 7) return '今週';
+      if (diffDays <= 14) return '先週';
+      if (diffDays <= 21) return '2週間前';
+      if (diffDays <= 28) return '3週間前';
+      return 'それ以前';
+    } catch {
+      return 'それ以前';
+    }
+  };
+
+  // フィルタリングとソート
+  const filteredNews = useMemo(() => {
+    let filtered = [...news];
+
+    // カテゴリでフィルタ
+    if (sortByCategory !== 'all') {
+      filtered = filtered.filter((item) => item.category === sortByCategory);
+    }
+
+    // 週でフィルタ
+    if (sortByWeek !== 'all') {
+      filtered = filtered.filter((item) => getWeekCategory(item.pubDate) === sortByWeek);
+    }
+
+    // 日付でソート（新しい順）
+    filtered.sort((a, b) => {
+      const dateA = new Date(a.pubDate).getTime();
+      const dateB = new Date(b.pubDate).getTime();
+      return dateB - dateA;
+    });
+
+    return filtered;
+  }, [news, sortByCategory, sortByWeek]);
+
   return (
     <main className="min-h-screen bg-gray-50">
       {/* ヘッダー */}
@@ -116,6 +164,48 @@ export default function Home() {
         </div>
       </header>
 
+      {/* ソートフィルター */}
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex flex-wrap gap-4 items-center">
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700">タグ:</label>
+              <select
+                value={sortByCategory}
+                onChange={(e) => setSortByCategory(e.target.value as SortByCategory)}
+                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">すべて</option>
+                <option value="言語生成AI">言語生成AI</option>
+                <option value="画像生成AI">画像生成AI</option>
+                <option value="動画生成AI">動画生成AI</option>
+                <option value="その他">その他</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium text-gray-700">公開タイミング:</label>
+              <select
+                value={sortByWeek}
+                onChange={(e) => setSortByWeek(e.target.value as SortByWeek)}
+                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">すべて</option>
+                <option value="今週">今週</option>
+                <option value="先週">先週</option>
+                <option value="2週間前">2週間前</option>
+                <option value="3週間前">3週間前</option>
+                <option value="それ以前">それ以前</option>
+              </select>
+            </div>
+
+            <div className="text-sm text-gray-500">
+              {filteredNews.length}件表示
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* メインコンテンツ */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {loading ? (
@@ -129,64 +219,36 @@ export default function Home() {
               エラー: {error}
             </div>
           </div>
-        ) : news.length === 0 ? (
+        ) : filteredNews.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-600">ニュースがありません。上記の「ニュースを取得」ボタンをクリックしてください。</p>
+            <p className="text-gray-600">該当するニュースがありません。</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {news.map((item, index) => (
+            {filteredNews.map((item, index) => (
               <a
                 key={index}
                 href={item.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden"
+                className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow p-5"
               >
-                {/* 画像 */}
-                {item.ogpImage && !item.ogpImage.includes('googleusercontent.com') ? (
-                  <div className="w-full h-48 bg-gray-200 overflow-hidden">
-                    <img
-                      src={item.ogpImage}
-                      alt={item.title}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <div className="w-full h-48 bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
-                    <span className="text-white text-4xl">📰</span>
-                  </div>
-                )}
+                {/* カテゴリ */}
+                <div className="mb-3">
+                  <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${getCategoryColor(item.category)}`}>
+                    {item.category}
+                  </span>
+                </div>
 
-                {/* カード内容 */}
-                <div className="p-5">
-                  {/* カテゴリ */}
-                  <div className="mb-3">
-                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${getCategoryColor(item.category)}`}>
-                      {item.category}
-                    </span>
-                  </div>
+                {/* タイトル */}
+                <h2 className="text-lg font-bold text-gray-900 mb-3 line-clamp-2">
+                  {item.title}
+                </h2>
 
-                  {/* タイトル */}
-                  <h2 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
-                    {item.title}
-                  </h2>
-
-                  {/* 説明 */}
-                  {item.description && (
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-3">
-                      {item.description}
-                    </p>
-                  )}
-
-                  {/* 日付 */}
-                  <div className="flex items-center text-xs text-gray-500">
-                    <span>📅</span>
-                    <span className="ml-1">{formatDate(item.pubDate)}</span>
-                  </div>
+                {/* 日付 */}
+                <div className="flex items-center text-xs text-gray-500">
+                  <span>📅</span>
+                  <span className="ml-1">{formatDate(item.pubDate)}</span>
                 </div>
               </a>
             ))}
