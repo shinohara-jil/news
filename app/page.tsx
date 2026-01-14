@@ -225,62 +225,90 @@ export default function Home() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredNews.map((item, index) => (
-              <a
-                key={index}
-                href={item.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow overflow-hidden"
-              >
-                {/* 画像 */}
-                {item.ogpImage ? (
-                  <div className="w-full h-48 bg-gray-200 overflow-hidden">
-                    <img
-                      src={item.ogpImage}
-                      alt={item.title}
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                      onError={(e) => {
-                        // エラー時はフォールバック画像を表示
-                        const img = e.target as HTMLImageElement;
-                        img.style.display = 'none';
-                        const parent = img.parentElement;
-                        if (parent) {
-                          parent.className = 'w-full h-48 bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center';
-                          parent.innerHTML = '<span class="text-white text-4xl">📰</span>';
-                        }
-                      }}
-                    />
-                  </div>
-                ) : (
-                  <div className="w-full h-48 bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
-                    <span className="text-white text-4xl">📰</span>
-                  </div>
-                )}
+            {filteredNews.map((item, index) => {
+              // ソースをURLから抽出
+              const getSource = (url: string) => {
+                try {
+                  const urlObj = new URL(url);
+                  const hostname = urlObj.hostname.replace('www.', '');
+                  // 主要なニュースサイトのドメインを整理
+                  if (hostname.includes('techcrunch')) return 'TechCrunch';
+                  if (hostname.includes('theverge')) return 'The Verge';
+                  if (hostname.includes('wired')) return 'WIRED';
+                  if (hostname.includes('reuters')) return 'Reuters';
+                  if (hostname.includes('bloomberg')) return 'Bloomberg';
+                  if (hostname.includes('nikkei')) return '日経新聞';
+                  if (hostname.includes('asahi')) return '朝日新聞';
+                  if (hostname.includes('yomiuri')) return '読売新聞';
+                  if (hostname.includes('mainichi')) return '毎日新聞';
+                  // ドメイン名をそのまま返す（最初の部分のみ）
+                  return hostname.split('.')[0].charAt(0).toUpperCase() + hostname.split('.')[0].slice(1);
+                } catch {
+                  return 'ニュース';
+                }
+              };
 
-                {/* カード内容 */}
-                <div className="p-5">
-                  {/* カテゴリ */}
-                  <div className="mb-3">
-                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${getCategoryColor(item.category)}`}>
-                      {item.category}
-                    </span>
-                  </div>
+              return (
+                <a
+                  key={index}
+                  href={item.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-white rounded-lg shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-gray-200 group"
+                >
+                  {/* 画像 */}
+                  {item.ogpImage ? (
+                    <div className="w-full h-48 bg-gray-200 overflow-hidden">
+                      <img
+                        src={item.ogpImage}
+                        alt={item.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                        onError={(e) => {
+                          // エラー時はフォールバック画像を表示
+                          const img = e.target as HTMLImageElement;
+                          img.style.display = 'none';
+                          const parent = img.parentElement;
+                          if (parent) {
+                            parent.className = 'w-full h-48 bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center';
+                            parent.innerHTML = '<span class="text-white text-4xl">📰</span>';
+                          }
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-full h-48 bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
+                      <span className="text-white text-4xl">📰</span>
+                    </div>
+                  )}
 
-                  {/* タイトル */}
-                  <h2 className="text-lg font-bold text-gray-900 mb-3 line-clamp-2">
-                    {item.title}
-                  </h2>
+                  {/* カード内容 */}
+                  <div className="p-5">
+                    {/* カテゴリ */}
+                    <div className="mb-3">
+                      <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold ${getCategoryColor(item.category)}`}>
+                        {item.category}
+                      </span>
+                    </div>
 
-                  {/* 日付 */}
-                  <div className="flex items-center text-xs text-gray-500">
-                    <span>📅</span>
-                    <span className="ml-1">{formatDate(item.pubDate)}</span>
+                    {/* タイトル */}
+                    <h2 className="text-base font-bold text-gray-900 mb-4 line-clamp-3 leading-relaxed group-hover:text-blue-600 transition-colors duration-200">
+                      {item.title}
+                    </h2>
+
+                    {/* ソースと日付 */}
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                      <span className="text-xs font-semibold text-gray-700">
+                        {getSource(item.link)}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {formatDate(item.pubDate)}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </a>
-            ))}
+                </a>
+              );
+            })}
           </div>
         )}
       </div>
