@@ -8,7 +8,7 @@ import * as cheerio from 'cheerio';
  * @param url GoogleニュースのURL
  * @returns 実際の記事URL、取得できない場合は元のURL
  */
-async function resolveGoogleNewsUrl(url: string): Promise<string> {
+export async function resolveGoogleNewsUrl(url: string): Promise<string> {
   // GoogleニュースのURLでない場合はそのまま返す
   if (!url.includes('news.google.com')) {
     return url;
