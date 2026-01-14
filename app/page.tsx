@@ -336,7 +336,7 @@ export default function Home() {
       {!heroImageError ? (
         <div className="relative w-full aspect-[16/9] overflow-hidden">
           <img
-            src="/hero-image.jpg"
+            src="/hero-image.png"
             alt="GENERATIVE AI CURATION MEDIA"
             className="w-full h-full object-cover"
             onError={() => {
@@ -352,13 +352,55 @@ export default function Home() {
         </div>
       )}
 
+      {/* ソートフィルター */}
+      <div className="bg-white border-b shadow-md sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+          <div className="flex flex-wrap gap-6 items-center">
+            <div className="flex items-center gap-3">
+              <label className="text-base font-bold text-gray-800">タグ:</label>
+              <select
+                value={sortByCategory}
+                onChange={(e) => setSortByCategory(e.target.value as SortByCategory)}
+                className="px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-medium bg-white hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer"
+              >
+                <option value="all">すべて</option>
+                <option value="言語生成AI">言語生成AI</option>
+                <option value="画像生成AI">画像生成AI</option>
+                <option value="動画生成AI">動画生成AI</option>
+                <option value="新規企業向けサービス">新規企業向けサービス</option>
+                <option value="新規BtoCサービス">新規BtoCサービス</option>
+                <option value="HRサービス">HRサービス</option>
+                <option value="その他">その他</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <label className="text-base font-bold text-gray-800">公開タイミング:</label>
+              <select
+                value={sortByWeek}
+                onChange={(e) => setSortByWeek(e.target.value as SortByWeek)}
+                className="px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-medium bg-white hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer"
+              >
+                <option value="all">すべて</option>
+                <option value="今週">今週</option>
+                <option value="先週">先週</option>
+                <option value="2週間前">2週間前</option>
+                <option value="3週間前">3週間前</option>
+                <option value="それ以前">それ以前</option>
+              </select>
+            </div>
+
+            <div className="text-base font-semibold text-gray-700 ml-auto">
+              {filteredNews.length}件表示
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* ヘッダー */}
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-gray-900">
-              生成AIニュースキュレーション
-            </h1>
+          <div className="flex justify-end items-center">
             <button
               onClick={handleFetchNews}
               disabled={fetchLoading}
@@ -374,51 +416,6 @@ export default function Home() {
           )}
         </div>
       </header>
-
-      {/* ソートフィルター */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-wrap gap-4 items-center">
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700">タグ:</label>
-              <select
-                value={sortByCategory}
-                onChange={(e) => setSortByCategory(e.target.value as SortByCategory)}
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">すべて</option>
-                <option value="言語生成AI">言語生成AI</option>
-                <option value="画像生成AI">画像生成AI</option>
-                <option value="動画生成AI">動画生成AI</option>
-                <option value="新規企業向けサービス">新規企業向けサービス</option>
-                <option value="新規BtoCサービス">新規BtoCサービス</option>
-                <option value="HRサービス">HRサービス</option>
-                <option value="その他">その他</option>
-              </select>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700">公開タイミング:</label>
-              <select
-                value={sortByWeek}
-                onChange={(e) => setSortByWeek(e.target.value as SortByWeek)}
-                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="all">すべて</option>
-                <option value="今週">今週</option>
-                <option value="先週">先週</option>
-                <option value="2週間前">2週間前</option>
-                <option value="3週間前">3週間前</option>
-                <option value="それ以前">それ以前</option>
-              </select>
-            </div>
-
-            <div className="text-sm text-gray-500">
-              {filteredNews.length}件表示
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* メインコンテンツ */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

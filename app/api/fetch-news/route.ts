@@ -5,7 +5,8 @@
 import { NextResponse } from 'next/server';
 import { fetchGoogleNewsRSS } from '@/lib/rss';
 import { fetchOGPImage, resolveGoogleNewsUrl } from '@/lib/ogp';
-import { classifyNewsCategory } from '@/lib/classify';
+// カテゴリ分類は一旦無効化
+// import { classifyNewsCategory } from '@/lib/classify';
 import { saveNewsToSheet, type NewsData } from '@/lib/sheets';
 import { readNewsFromSheet } from '@/lib/sheets-read';
 import { generateImageWithGemini } from '@/lib/gemini';
@@ -50,41 +51,60 @@ export async function GET() {
     
     // 1. RSSからニュースを取得（多めに取得して、新しいものを選ぶ）
     const newsItems = await fetchGoogleNewsRSS('生成AI OR AI生成', 20);
-    console.log(`${newsItems.length}件のニュースを取得しました`);
+    console.log(`RSSから取得した記事: ${newsItems.length}件`);
+    console.log(`既存記事数: ${existingNews.length}件`);
     
     // 既存記事と重複しない記事をフィルタリング
     const newNewsItems = newsItems.filter((item) => {
       // タイトルとリンクの両方で重複チェック
       const title = item.title.trim();
       const link = item.link.trim();
-      return !existingTitles.has(title) && !existingLinks.has(link);
+      const isDuplicate = existingTitles.has(title) || existingLinks.has(link);
+      
+      if (isDuplicate) {
+        console.log(`重複記事をスキップ: ${title.substring(0, 50)}...`);
+      }
+      
+      return !isDuplicate;
     });
     
     console.log(`重複を除いた新しい記事: ${newNewsItems.length}件`);
     
-    // 新しい記事がない場合、テスト用に既存記事を1件選んで画像生成を試す
-    let itemsToProcess: typeof newsItems = [];
-    let isTestMode = false;
-    if (newNewsItems.length === 0) {
-      console.log('⚠️ 新しい記事がないため、テスト用に既存記事を1件選んで画像生成を試します');
-      // 既存記事から1件選ぶ（最新のもの）
-      if (existingNews.length > 0) {
-        const testItem = existingNews[0];
-        // RSSから取得した記事の形式に変換
-        itemsToProcess = [{
-          title: testItem.title,
-          link: testItem.link,
-          description: testItem.description,
-          pubDate: testItem.pubDate,
-        }];
-        isTestMode = true;
-        console.log(`テスト用記事: ${testItem.title}`);
-        console.log('⚠️ テストモード: 画像生成のみ実行し、スプレッドシートには保存しません');
-      }
+    // デバッグ: 最初の3件のタイトルを表示
+    if (newNewsItems.length > 0) {
+      console.log('新しい記事の例:');
+      newNewsItems.slice(0, 3).forEach((item, idx) => {
+        console.log(`  ${idx + 1}. ${item.title.substring(0, 60)}...`);
+      });
     } else {
-      // 最新の3件に絞る
-      itemsToProcess = newNewsItems.slice(0, 3);
+      console.log('⚠️ 新しい記事が0件です。RSSから取得した記事の最初の3件:');
+      newsItems.slice(0, 3).forEach((item, idx) => {
+        const title = item.title.trim();
+        const link = item.link.trim();
+        const titleExists = existingTitles.has(title);
+        const linkExists = existingLinks.has(link);
+        console.log(`  ${idx + 1}. ${title.substring(0, 60)}...`);
+        console.log(`     タイトル重複: ${titleExists}, リンク重複: ${linkExists}`);
+      });
     }
+    
+    // 新しい記事がない場合は終了
+    if (newNewsItems.length === 0) {
+      return NextResponse.json({
+        success: true,
+        message: '新しい記事がありませんでした（全て既存記事と重複しています）',
+        count: 0,
+        data: [],
+        debug: {
+          rssItemsCount: newsItems.length,
+          existingItemsCount: existingNews.length,
+          newItemsCount: 0,
+        },
+      });
+    }
+    
+    // 最新の1件に絞る
+    const itemsToProcess = newNewsItems.slice(0, 1);
     
     console.log(`処理する記事: ${itemsToProcess.length}件`);
 
@@ -102,10 +122,8 @@ export async function GET() {
         console.log(`  解決後のURL: ${actualLink}`);
       }
       
-      // カテゴリを分類（Gemini 2.5 Flashを使用）
-      console.log(`  カテゴリ分類中...`);
-      const category = await classifyNewsCategory(item.title, item.description);
-      console.log(`  分類結果: ${category}`);
+      // カテゴリは「その他」をデフォルトで設定（分類APIは無効化）
+      const category = 'その他';
 
       // Gemini APIで画像を生成（優先）
       let generatedImageUrl: string | null = null;
@@ -168,15 +186,13 @@ export async function GET() {
       });
     }
 
-    console.log('OGP画像とカテゴリの取得が完了しました');
+    console.log('OGP画像の取得が完了しました');
     console.log(`保存予定のデータ: ${JSON.stringify(newsData.map(item => ({ title: item.title, link: item.link, image: item.ogpImage ? 'あり' : 'なし' })), null, 2)}`);
 
-    // 3. スプレッドシートに保存（テストモードの場合はスキップ）
-    if (!isTestMode && newsData.length > 0) {
+    // 3. スプレッドシートに保存
+    if (newsData.length > 0) {
       await saveNewsToSheet(newsData);
       console.log('スプレッドシートへの保存が完了しました');
-    } else if (isTestMode) {
-      console.log('⚠️ テストモードのため、スプレッドシートには保存しませんでした');
     }
 
     return NextResponse.json({
