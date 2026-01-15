@@ -1,6 +1,6 @@
 # GitHub Actions セットアップ手順
 
-GitHub Actionsを使って、毎日16時に自動でニュースを3件取得する設定です。
+GitHub Actionsを使って、毎日午前7時と午後4時に自動でニュースを3件取得する設定です。
 
 ## 必要なGitHub Secretsの設定
 
@@ -23,15 +23,18 @@ GitHub Actionsを使って、毎日16時に自動でニュースを3件取得す
 #### `APP_URL`
 - 「New repository secret」ボタンをクリック
 - Name: `APP_URL`
-- Secret: https://ai-news-site-c.vercel.app/
-
+- Secret: デプロイ先のURL（例: `https://ai-news-site-c.vercel.app`）
+  - ⚠️ **重要**: URLの最後に`/`は付けないでください
+  - 正しい例: `https://ai-news-site-c.vercel.app`
+  - 間違った例: `https://ai-news-site-c.vercel.app/`
   - ローカル環境では動作しないため、Vercel等にデプロイしている必要があります
-  - URLの最後に`/`は不要です
 - 「Add secret」をクリック
 
 ## ワークフローの実行スケジュール
 
-- **自動実行**: 毎日日本時間16時（UTC 7時）に自動実行
+- **自動実行**: 毎日日本時間7時と16時に自動実行
+  - 午前7時（UTC 22時）
+  - 午後4時（UTC 7時）
 - **手動実行**: GitHubのActionsタブから手動でも実行可能
 
 ## 手動実行の方法
@@ -48,6 +51,11 @@ GitHub Actionsを使って、毎日16時に自動でニュースを3件取得す
 3. ログを確認して、ニュースが正常に取得されたか確認
 
 ## トラブルシューティング
+
+### エラー: HTTPステータスコード 308
+- `APP_URL`の末尾に`/`が含まれています
+- GitHub Secretsの`APP_URL`を確認し、末尾の`/`を削除してください
+- 例: `https://ai-news-site-c.vercel.app/` → `https://ai-news-site-c.vercel.app`
 
 ### エラー: HTTPステータスコード 401
 - `ADMIN_SECRET_KEY`が正しく設定されているか確認してください
