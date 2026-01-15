@@ -39,15 +39,11 @@ jobs:
           app_url=$(echo "${{ secrets.APP_URL }}" | xargs)
           admin_key=$(echo "${{ secrets.ADMIN_SECRET_KEY }}" | xargs)
 
+          # 末尾のスラッシュを削除
+          app_url="${app_url%/}"
+
           echo "APP_URL: $app_url"
           echo "APP_URL文字数: ${#app_url}"
-
-          # URLの詳細診断
-          echo ""
-          echo "=== URL診断 ==="
-          echo "先頭5文字: ${app_url:0:5}"
-          echo "末尾5文字: ${app_url: -5}"
-          echo "16進ダンプ: $(echo -n "$app_url" | od -A n -t x1 | head -c 50)"
 
           # URLの形式チェック
           if [[ ! "$app_url" =~ ^https?:// ]]; then
@@ -58,7 +54,6 @@ jobs:
           fi
 
           echo "✓ URLの形式は正しいです"
-          echo "==============="
 
           # エラー時もスクリプトを継続
           set +e
@@ -66,52 +61,47 @@ jobs:
           # 完全なURLを構築
           full_url="${app_url}/api/fetch-news?key=${admin_key}&count=3"
           echo ""
-          echo "呼び出すURL: ${full_url:0:60}... (一部マスク)"
+          echo "APIを呼び出し中..."
 
           # APIエンドポイントを呼び出し（リダイレクトを追跡）
-          echo ""
-          echo "APIを呼び出し中..."
-          echo ""
-          response=$(curl -L -s -w "\nHTTP_STATUS:%{http_code}" "$full_url" 2>&1)
+          response=$(curl -L --max-redirs 10 -s -w "\nHTTP_STATUS:%{http_code}" "$full_url")
 
           curl_exit_code=$?
-          echo "curlの終了コード: $curl_exit_code"
-
-          # デバッグ: レスポンス全体を表示
-          echo ""
-          echo "=== レスポンス全体 ==="
-          echo "$response"
-          echo "===================="
-          echo ""
 
           # HTTPステータスコードを抽出
           http_status=$(echo "$response" | grep "HTTP_STATUS:" | cut -d: -f2 | tr -d '[:space:]')
           body=$(echo "$response" | sed '/HTTP_STATUS:/d')
 
-          echo "HTTPステータスコード: [$http_status]"
-          echo ""
-          echo "レスポンスボディ:"
-
-          # jqがインストールされている場合は整形、なければそのまま出力
-          if command -v jq &> /dev/null; then
-            echo "$body" | jq '.' 2>/dev/null || echo "$body"
-          else
-            echo "$body"
-          fi
+          echo "HTTPステータスコード: $http_status"
 
           # HTTPステータスコードのチェック
           if [ -z "$http_status" ]; then
             echo ""
             echo "❌ エラー: HTTPステータスコードを取得できませんでした"
-            echo "curlが失敗したか、レスポンス形式が不正です"
+            echo "curlの終了コード: $curl_exit_code"
             exit 1
           fi
 
           if [ "$http_status" -ne 200 ]; then
             echo ""
             echo "❌ エラー: HTTPステータスコード $http_status"
+            echo ""
+            echo "レスポンス:"
+            if command -v jq &> /dev/null; then
+              echo "$body" | jq '.' 2>/dev/null || echo "$body"
+            else
+              echo "$body"
+            fi
             exit 1
           fi
 
           echo ""
-          echo "✓ ニュース取得が完了しました!"
+          echo "レスポンス:"
+          if command -v jq &> /dev/null; then
+            echo "$body" | jq '.' 2>/dev/null || echo "$body"
+          else
+            echo "$body"
+          fi
+
+          echo ""
+          echo "✅ ニュース取得が完了しました!"
