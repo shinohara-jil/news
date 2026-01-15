@@ -17,15 +17,30 @@ jobs:
           echo "ニュース取得を開始します..."
           echo "APP_URL: ${{ secrets.APP_URL }}"
 
+          # エラー時もスクリプトを継続
+          set +e
+
           # APIエンドポイントを呼び出し（3件取得）
+          echo ""
+          echo "APIを呼び出し中..."
           response=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
             "${{ secrets.APP_URL }}/api/fetch-news?key=${{ secrets.ADMIN_SECRET_KEY }}&count=3")
 
+          curl_exit_code=$?
+          echo "curlの終了コード: $curl_exit_code"
+
+          # デバッグ: レスポンス全体を表示
+          echo ""
+          echo "=== レスポンス全体 ==="
+          echo "$response"
+          echo "===================="
+          echo ""
+
           # HTTPステータスコードを抽出
-          http_status=$(echo "$response" | grep "HTTP_STATUS:" | cut -d: -f2)
+          http_status=$(echo "$response" | grep "HTTP_STATUS:" | cut -d: -f2 | tr -d '[:space:]')
           body=$(echo "$response" | sed '/HTTP_STATUS:/d')
 
-          echo "HTTPステータスコード: $http_status"
+          echo "HTTPステータスコード: [$http_status]"
           echo ""
           echo "レスポンスボディ:"
 
@@ -38,12 +53,15 @@ jobs:
 
           # HTTPステータスコードのチェック
           if [ -z "$http_status" ]; then
-            echo "エラー: HTTPステータスコードを取得できませんでした"
+            echo ""
+            echo "❌ エラー: HTTPステータスコードを取得できませんでした"
+            echo "curlが失敗したか、レスポンス形式が不正です"
             exit 1
           fi
 
           if [ "$http_status" -ne 200 ]; then
-            echo "エラー: HTTPステータスコード $http_status"
+            echo ""
+            echo "❌ エラー: HTTPステータスコード $http_status"
             exit 1
           fi
 
