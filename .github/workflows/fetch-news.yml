@@ -1,0 +1,34 @@
+name: 毎日ニュース取得
+
+on:
+  # 毎日日本時間16時に実行（UTC 7時）
+  schedule:
+    - cron: '0 7 * * *'
+  # 手動実行も可能
+  workflow_dispatch:
+
+jobs:
+  fetch-news:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ニュース取得APIを呼び出し
+        run: |
+          echo "ニュース取得を開始します..."
+
+          # APIエンドポイントを呼び出し（3件取得）
+          response=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
+            "${{ secrets.APP_URL }}/api/fetch-news?key=${{ secrets.ADMIN_SECRET_KEY }}&count=3")
+
+          http_status=$(echo "$response" | grep "HTTP_STATUS:" | cut -d: -f2)
+          body=$(echo "$response" | sed '/HTTP_STATUS:/d')
+
+          echo "レスポンス:"
+          echo "$body" | jq '.' || echo "$body"
+
+          if [ "$http_status" -ne 200 ]; then
+            echo "エラー: HTTPステータスコード $http_status"
+            exit 1
+          fi
+
+          echo "ニュース取得が完了しました!"
