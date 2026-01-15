@@ -35,12 +35,30 @@ jobs:
             exit 1
           fi
 
-          # 変数に代入
-          app_url="${{ secrets.APP_URL }}"
-          admin_key="${{ secrets.ADMIN_SECRET_KEY }}"
+          # 変数に代入して前後の空白を削除
+          app_url=$(echo "${{ secrets.APP_URL }}" | xargs)
+          admin_key=$(echo "${{ secrets.ADMIN_SECRET_KEY }}" | xargs)
 
           echo "APP_URL: $app_url"
           echo "APP_URL文字数: ${#app_url}"
+
+          # URLの詳細診断
+          echo ""
+          echo "=== URL診断 ==="
+          echo "先頭5文字: ${app_url:0:5}"
+          echo "末尾5文字: ${app_url: -5}"
+          echo "16進ダンプ: $(echo -n "$app_url" | od -A n -t x1 | head -c 50)"
+
+          # URLの形式チェック
+          if [[ ! "$app_url" =~ ^https?:// ]]; then
+            echo ""
+            echo "❌ エラー: APP_URLがhttp://またはhttps://で始まっていません"
+            echo "現在の値: $app_url"
+            exit 1
+          fi
+
+          echo "✓ URLの形式は正しいです"
+          echo "==============="
 
           # エラー時もスクリプトを継続
           set +e
@@ -50,10 +68,11 @@ jobs:
           echo ""
           echo "呼び出すURL: ${full_url:0:60}... (一部マスク)"
 
-          # APIエンドポイントを呼び出し（3件取得）
+          # APIエンドポイントを呼び出し（verbose modeで詳細表示）
           echo ""
-          echo "APIを呼び出し中..."
-          response=$(curl -s -w "\nHTTP_STATUS:%{http_code}" "$full_url")
+          echo "APIを呼び出し中（詳細モード）..."
+          echo ""
+          response=$(curl -v -s -w "\nHTTP_STATUS:%{http_code}" "$full_url" 2>&1)
 
           curl_exit_code=$?
           echo "curlの終了コード: $curl_exit_code"
