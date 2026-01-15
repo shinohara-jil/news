@@ -35,16 +35,20 @@ jobs:
             exit 1
           fi
 
-          echo "APP_URL: ${{ secrets.APP_URL }}"
-          echo "APP_URL文字数: ${#{{ secrets.APP_URL }}}"
+          # 変数に代入
+          app_url="${{ secrets.APP_URL }}"
+          admin_key="${{ secrets.ADMIN_SECRET_KEY }}"
+
+          echo "APP_URL: $app_url"
+          echo "APP_URL文字数: ${#app_url}"
 
           # エラー時もスクリプトを継続
           set +e
 
           # 完全なURLを構築
-          full_url="${{ secrets.APP_URL }}/api/fetch-news?key=${{ secrets.ADMIN_SECRET_KEY }}&count=3"
+          full_url="${app_url}/api/fetch-news?key=${admin_key}&count=3"
           echo ""
-          echo "呼び出すURL: ${full_url:0:50}... (一部マスク)"
+          echo "呼び出すURL: ${full_url:0:60}... (一部マスク)"
 
           # APIエンドポイントを呼び出し（3件取得）
           echo ""
