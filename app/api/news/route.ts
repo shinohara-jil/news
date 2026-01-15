@@ -4,8 +4,8 @@
 import { NextResponse } from 'next/server';
 import { readNewsFromSheet } from '@/lib/sheets-read';
 
-// キャッシュ設定: 60秒間キャッシュ（本番環境では効果的）
-export const revalidate = 60;
+// キャッシュ設定: 30秒間キャッシュ（最新情報を優先）
+export const revalidate = 30;
 
 export async function GET() {
   try {
@@ -25,8 +25,8 @@ export async function GET() {
       data: newsData,
     });
 
-    // キャッシュヘッダーを設定（60秒間キャッシュ）
-    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+    // キャッシュヘッダーを設定（30秒間キャッシュ、最新情報を優先）
+    response.headers.set('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=60');
 
     return response;
   } catch (error) {

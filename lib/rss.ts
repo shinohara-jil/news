@@ -19,15 +19,17 @@ export async function fetchGoogleNewsRSS(
   maxResults: number = 20
 ): Promise<NewsItem[]> {
   // GoogleニュースRSSのURL（日本語版）
+  // when=1d: 過去24時間の記事に絞る（最新記事を優先）
   const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(
     query
-  )}&hl=ja&gl=JP&ceid=JP:ja`;
+  )}&hl=ja&gl=JP&ceid=JP:ja&when=1d`;
 
   try {
     const response = await fetch(rssUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       },
+      cache: 'no-store', // キャッシュを無視して最新データを取得
     });
 
     if (!response.ok) {
@@ -36,6 +38,13 @@ export async function fetchGoogleNewsRSS(
 
     const xmlText = await response.text();
     const items = parseRSSXML(xmlText);
+
+    // 日付でソート（新しい順）
+    items.sort((a, b) => {
+      const dateA = new Date(a.pubDate).getTime();
+      const dateB = new Date(b.pubDate).getTime();
+      return dateB - dateA; // 新しい順
+    });
 
     return items.slice(0, maxResults);
   } catch (error) {

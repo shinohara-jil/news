@@ -84,8 +84,8 @@ function NewsCard({ item, index }: { item: NewsItem; index: number }) {
           />
         </div>
       ) : (
-        <div className="w-full h-48 bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
-          <span className="text-white text-4xl">📰</span>
+        <div className="w-full h-48 bg-gray-300 flex items-center justify-center">
+          <span className="text-gray-600 text-lg font-medium">no image</span>
         </div>
       )}
 
@@ -146,16 +146,35 @@ export default function Home() {
   // ニュースデータを取得
   useEffect(() => {
     loadNews();
+    
+    // 30秒ごとに最新データを取得
+    const interval = setInterval(() => {
+      loadNews(true); // キャッシュを無視して最新データを取得
+    }, 30 * 1000); // 30秒
+
+    // ページがフォーカスされた時に最新データを取得
+    const handleFocus = () => {
+      loadNews(true);
+    };
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   const loadNews = async (forceRefresh = false) => {
     try {
-      setLoading(true);
+      // 強制リフレッシュ時のみローディング表示
+      if (forceRefresh) {
+        setLoading(true);
+      }
       
-      // キャッシュの確認（5分間有効）
+      // キャッシュの確認（30秒間有効）
       const CACHE_KEY = 'news_cache';
       const CACHE_TIMESTAMP_KEY = 'news_cache_timestamp';
-      const CACHE_DURATION = 5 * 60 * 1000; // 5分
+      const CACHE_DURATION = 30 * 1000; // 30秒
 
       if (!forceRefresh && typeof window !== 'undefined') {
         const cachedData = localStorage.getItem(CACHE_KEY);
@@ -171,8 +190,10 @@ export default function Home() {
             setError(null);
             setLoading(false);
             
-            // バックグラウンドで最新データを取得
-            fetch('/api/news')
+            // バックグラウンドで最新データを取得（キャッシュを無視）
+            fetch('/api/news', {
+              cache: 'no-store',
+            })
               .then(res => res.json())
               .then(data => {
                 if (data.success && data.data) {
@@ -189,9 +210,9 @@ export default function Home() {
         }
       }
 
-      // キャッシュがない、または期限切れの場合、APIから取得
+      // キャッシュがない、または期限切れの場合、APIから取得（常にキャッシュを無視）
       const response = await fetch('/api/news', {
-        cache: 'no-store', // 強制リフレッシュ時
+        cache: 'no-store', // 常に最新データを取得
       });
       const data = await response.json();
 

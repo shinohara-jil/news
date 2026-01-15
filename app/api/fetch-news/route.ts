@@ -46,8 +46,8 @@ export async function GET() {
       existingNews.map((item) => item.title.trim()).filter(Boolean)
     );
     
-    // 1. RSSからニュースを取得（多めに取得して、新しいものを選ぶ）
-    const newsItems = await fetchGoogleNewsRSS('生成AI OR AI生成', 20);
+    // 1. RSSからニュースを取得（最新記事を優先：過去24時間の記事から取得）
+    const newsItems = await fetchGoogleNewsRSS('生成AI OR AI生成', 50);
     console.log(`RSSから取得した記事: ${newsItems.length}件`);
     console.log(`既存記事数: ${existingNews.length}件`);
     
@@ -158,6 +158,14 @@ export async function GET() {
           console.error(`記事タイトル: ${item.title}`);
           if (error instanceof Error) {
             console.error(`エラーメッセージ: ${error.message}`);
+            
+            // 429エラーの場合は特別なメッセージ
+            if (error.message.includes('429')) {
+              console.warn(`⚠️ レート制限エラー（429）が発生しました。`);
+              console.warn(`   リトライを試みましたが、レート制限に達している可能性があります。`);
+              console.warn(`   OGP画像を取得して続行します。`);
+            }
+            
             // スタックトレースは最初の数行だけ表示
             if (error.stack) {
               const stackLines = error.stack.split('\n').slice(0, 5);
