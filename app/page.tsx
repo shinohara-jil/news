@@ -138,8 +138,6 @@ export default function Home() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [fetchLoading, setFetchLoading] = useState(false);
-  const [fetchResult, setFetchResult] = useState<string | null>(null);
   const [sortByCategory, setSortByCategory] = useState<SortByCategory>('all');
   const [sortByWeek, setSortByWeek] = useState<SortByWeek>('all');
 
@@ -241,29 +239,6 @@ export default function Home() {
       }
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleFetchNews = async () => {
-    setFetchLoading(true);
-    setFetchResult(null);
-    setError(null);
-
-    try {
-      const response = await fetch('/api/fetch-news');
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'エラーが発生しました');
-      }
-
-      setFetchResult(`成功: ${data.count}件のニュースを取得してスプレッドシートに保存しました`);
-      // データを再読み込み（キャッシュを無視）
-      await loadNews(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '不明なエラーが発生しました');
-    } finally {
-      setFetchLoading(false);
     }
   };
 
@@ -409,26 +384,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-
-      {/* ヘッダー */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-end items-center">
-            <button
-              onClick={handleFetchNews}
-              disabled={fetchLoading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-            >
-              {fetchLoading ? '取得中...' : 'ニュースを取得'}
-            </button>
-          </div>
-          {fetchResult && (
-            <div className="mt-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded text-sm">
-              {fetchResult}
-            </div>
-          )}
-        </div>
-      </header>
 
       {/* メインコンテンツ */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

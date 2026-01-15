@@ -13,8 +13,31 @@ import { uploadImageToDrive } from '@/lib/drive';
 
 export const maxDuration = 300; // 5分（Vercelの制限）
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    // シークレットキーによる認証チェック
+    const { searchParams } = new URL(request.url);
+    const providedKey = searchParams.get('key');
+    const countParam = searchParams.get('count');
+    const adminSecretKey = process.env.ADMIN_SECRET_KEY;
+
+    if (!adminSecretKey) {
+      return NextResponse.json(
+        { error: 'ADMIN_SECRET_KEYが設定されていません' },
+        { status: 500 }
+      );
+    }
+
+    if (!providedKey || providedKey !== adminSecretKey) {
+      return NextResponse.json(
+        { error: '認証エラー: 無効なシークレットキーです' },
+        { status: 401 }
+      );
+    }
+
+    // 取得件数を取得（デフォルト: 1件）
+    const count = countParam ? Math.min(Math.max(parseInt(countParam, 10), 1), 10) : 1;
+
     // 環境変数のチェック
     if (!process.env.GOOGLE_CLIENT_ID || !process.env.SPREADSHEET_ID) {
       return NextResponse.json(
@@ -100,10 +123,10 @@ export async function GET() {
       });
     }
     
-    // 最新の1件に絞る
-    const itemsToProcess = newNewsItems.slice(0, 1);
-    
-    console.log(`処理する記事: ${itemsToProcess.length}件`);
+    // 指定件数に絞る
+    const itemsToProcess = newNewsItems.slice(0, count);
+
+    console.log(`処理する記事: ${itemsToProcess.length}件（指定: ${count}件）`);
 
     // 2. OGP画像とカテゴリを取得
     const newsData: NewsData[] = [];
