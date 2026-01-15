@@ -68,11 +68,11 @@ jobs:
           echo ""
           echo "呼び出すURL: ${full_url:0:60}... (一部マスク)"
 
-          # APIエンドポイントを呼び出し（verbose modeで詳細表示）
+          # APIエンドポイントを呼び出し（リダイレクトを追跡）
           echo ""
-          echo "APIを呼び出し中（詳細モード）..."
+          echo "APIを呼び出し中..."
           echo ""
-          response=$(curl -v -s -w "\nHTTP_STATUS:%{http_code}" "$full_url" 2>&1)
+          response=$(curl -L -s -w "\nHTTP_STATUS:%{http_code}" "$full_url" 2>&1)
 
           curl_exit_code=$?
           echo "curlの終了コード: $curl_exit_code"
