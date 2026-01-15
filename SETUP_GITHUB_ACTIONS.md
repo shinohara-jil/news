@@ -23,7 +23,8 @@ GitHub Actionsを使って、毎日16時に自動でニュースを3件取得す
 #### `APP_URL`
 - 「New repository secret」ボタンをクリック
 - Name: `APP_URL`
-- Secret: デプロイ先のURL（例: `https://your-app.vercel.app`）
+- Secret: https://ai-news-site-c.vercel.app/
+
   - ローカル環境では動作しないため、Vercel等にデプロイしている必要があります
   - URLの最後に`/`は不要です
 - 「Add secret」をクリック

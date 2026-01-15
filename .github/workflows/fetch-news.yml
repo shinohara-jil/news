@@ -15,20 +15,37 @@ jobs:
       - name: ニュース取得APIを呼び出し
         run: |
           echo "ニュース取得を開始します..."
+          echo "APP_URL: ${{ secrets.APP_URL }}"
 
           # APIエンドポイントを呼び出し（3件取得）
           response=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
             "${{ secrets.APP_URL }}/api/fetch-news?key=${{ secrets.ADMIN_SECRET_KEY }}&count=3")
 
+          # HTTPステータスコードを抽出
           http_status=$(echo "$response" | grep "HTTP_STATUS:" | cut -d: -f2)
           body=$(echo "$response" | sed '/HTTP_STATUS:/d')
 
-          echo "レスポンス:"
-          echo "$body" | jq '.' || echo "$body"
+          echo "HTTPステータスコード: $http_status"
+          echo ""
+          echo "レスポンスボディ:"
+
+          # jqがインストールされている場合は整形、なければそのまま出力
+          if command -v jq &> /dev/null; then
+            echo "$body" | jq '.' 2>/dev/null || echo "$body"
+          else
+            echo "$body"
+          fi
+
+          # HTTPステータスコードのチェック
+          if [ -z "$http_status" ]; then
+            echo "エラー: HTTPステータスコードを取得できませんでした"
+            exit 1
+          fi
 
           if [ "$http_status" -ne 200 ]; then
             echo "エラー: HTTPステータスコード $http_status"
             exit 1
           fi
 
-          echo "ニュース取得が完了しました!"
+          echo ""
+          echo "✓ ニュース取得が完了しました!"
