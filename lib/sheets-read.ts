@@ -90,7 +90,7 @@ export async function readNewsFromSheet(): Promise<NewsData[]> {
         description: row[2] || '',
         pubDate: row[3] || '',
         ogpImage: row[4] || null,
-        category: row[5] || '新規BtoCサービス',
+        category: row[5] || '調査・記事系',
       }));
 
     return newsData;

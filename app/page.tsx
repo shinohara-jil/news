@@ -36,18 +36,14 @@ function NewsCard({ item, index }: { item: NewsItem; index: number }) {
   // カテゴリの色を取得
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case '言語生成AI':
+      case '調査・記事系':
         return 'bg-blue-100 text-blue-800';
-      case '画像生成AI':
-        return 'bg-purple-100 text-purple-800';
-      case '動画生成AI':
-        return 'bg-pink-100 text-pink-800';
-      case '新規企業向けサービス':
+      case '新規サービス系':
         return 'bg-green-100 text-green-800';
-      case '新規BtoCサービス':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'HRサービス':
-        return 'bg-indigo-100 text-indigo-800';
+      case '顧客事例系':
+        return 'bg-purple-100 text-purple-800';
+      case 'リスク系':
+        return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -132,13 +128,11 @@ interface NewsItem {
 
 type SortByCategory = 
   | 'all' 
-  | '言語生成AI' 
-  | '画像生成AI' 
-  | '動画生成AI' 
-  | '新規企業向けサービス' 
-  | '新規BtoCサービス' 
-  | 'HRサービス';
-type SortByWeek = 'all' | '今週' | '先週' | '2週間前' | '3週間前' | 'それ以前';
+  | '調査・記事系' 
+  | '新規サービス系' 
+  | '顧客事例系' 
+  | 'リスク系';
+type SortByWeek = 'all' | '1日以内' | '今週' | '先週' | '2週間前' | '3週間前' | 'それ以前';
 
 export default function Home() {
   const [news, setNews] = useState<NewsItem[]>([]);
@@ -292,7 +286,8 @@ export default function Home() {
       const diffTime = now.getTime() - date.getTime();
       const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-      if (diffDays < 0) return '今週'; // 未来の日付
+      if (diffDays < 0) return '1日以内'; // 未来の日付は1日以内として扱う
+      if (diffDays <= 1) return '1日以内';
       if (diffDays <= 7) return '今週';
       if (diffDays <= 14) return '先週';
       if (diffDays <= 21) return '2週間前';
@@ -363,12 +358,10 @@ export default function Home() {
                 className="px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-medium bg-white hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer"
               >
                 <option value="all">すべて</option>
-                <option value="言語生成AI">言語生成AI</option>
-                <option value="画像生成AI">画像生成AI</option>
-                <option value="動画生成AI">動画生成AI</option>
-                <option value="新規企業向けサービス">新規企業向けサービス</option>
-                <option value="新規BtoCサービス">新規BtoCサービス</option>
-                <option value="HRサービス">HRサービス</option>
+                <option value="調査・記事系">調査・記事系</option>
+                <option value="新規サービス系">新規サービス系</option>
+                <option value="顧客事例系">顧客事例系</option>
+                <option value="リスク系">リスク系</option>
               </select>
             </div>
 
@@ -380,6 +373,7 @@ export default function Home() {
                 className="px-4 py-2 border-2 border-gray-300 rounded-lg text-base font-medium bg-white hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors cursor-pointer"
               >
                 <option value="all">すべて</option>
+                <option value="1日以内">1日以内</option>
                 <option value="今週">今週</option>
                 <option value="先週">先週</option>
                 <option value="2週間前">2週間前</option>
