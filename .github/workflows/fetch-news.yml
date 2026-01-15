@@ -15,16 +15,41 @@ jobs:
       - name: ニュース取得APIを呼び出し
         run: |
           echo "ニュース取得を開始します..."
+
+          # 環境変数のチェック
+          if [ -z "${{ secrets.APP_URL }}" ]; then
+            echo "❌ エラー: APP_URLが設定されていません"
+            echo ""
+            echo "GitHub Secretsに以下を設定してください:"
+            echo "  Name: APP_URL"
+            echo "  Secret: https://your-app.vercel.app (末尾のスラッシュなし)"
+            exit 1
+          fi
+
+          if [ -z "${{ secrets.ADMIN_SECRET_KEY }}" ]; then
+            echo "❌ エラー: ADMIN_SECRET_KEYが設定されていません"
+            echo ""
+            echo "GitHub Secretsに以下を設定してください:"
+            echo "  Name: ADMIN_SECRET_KEY"
+            echo "  Secret: .env.localのADMIN_SECRET_KEYと同じ値"
+            exit 1
+          fi
+
           echo "APP_URL: ${{ secrets.APP_URL }}"
+          echo "APP_URL文字数: ${#{{ secrets.APP_URL }}}"
 
           # エラー時もスクリプトを継続
           set +e
 
+          # 完全なURLを構築
+          full_url="${{ secrets.APP_URL }}/api/fetch-news?key=${{ secrets.ADMIN_SECRET_KEY }}&count=3"
+          echo ""
+          echo "呼び出すURL: ${full_url:0:50}... (一部マスク)"
+
           # APIエンドポイントを呼び出し（3件取得）
           echo ""
           echo "APIを呼び出し中..."
-          response=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
-            "${{ secrets.APP_URL }}/api/fetch-news?key=${{ secrets.ADMIN_SECRET_KEY }}&count=3")
+          response=$(curl -s -w "\nHTTP_STATUS:%{http_code}" "$full_url")
 
           curl_exit_code=$?
           echo "curlの終了コード: $curl_exit_code"
