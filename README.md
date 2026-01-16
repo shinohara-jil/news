@@ -2,27 +2,41 @@
 
 Next.js (App Router) と Tailwind CSS を使用した生成AIニュースサイトです。
 
-## 機能
+## 🎯 主要機能
 
-- **RSS取得**: Googleニュースから生成AI関連のニュースを自動取得
-- **OGP画像抽出**: 記事のリンクからOGP画像を自動抽出
-- **タグ分類**: タイトルから「言語生成AI」「画像生成AI」「動画生成AI」「その他」に自動分類
+- **RSS取得**: Googleニュースから生成AI関連のニュースを自動取得（重複除外機能付き）
+- **AI画像生成**: Gemini 2.0 Flash（Imagen 3）でニュースに合った画像を自動生成
+- **画像アップロード**: 生成した画像をGoogle Driveに自動保存
+- **OGP画像抽出**: AI画像生成失敗時のフォールバックとして記事のOGP画像を取得
+- **自動カテゴリ分類**: Gemini 2.5 Flashで「言語生成AI」「画像生成AI」「動画生成AI」「音声生成AI」「その他」に自動分類
 - **スプレッドシート保存**: Googleスプレッドシートに自動保存
+- **自動実行**: GitHub Actionsで毎日午前7時・午後4時に自動実行（1日最大6件）
 
 ## セットアップ
 
 詳細なセットアップ手順は `SETUP.md` を参照してください。
 
-### 環境変数
+### 必要な環境変数
 
 `.env.local` ファイルを作成し、以下の環境変数を設定してください：
 
 ```env
+# Google OAuth 2.0
 GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=your-client-secret
 GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/callback
+
+# Google Spreadsheet
 SPREADSHEET_ID=your-spreadsheet-id
+
+# OAuth リフレッシュトークン（初回認証後に設定）
 GOOGLE_REFRESH_TOKEN=
+
+# Gemini API（AI画像生成・カテゴリ分類）
+GEMINI_API_KEY=your-gemini-api-key
+
+# 管理者シークレットキー
+ADMIN_SECRET_KEY=your-secret-key
 ```
 
 詳細は `SETUP.md` を参照してください。
@@ -70,8 +84,19 @@ npm run dev
 |---------|--------|------|--------|---------|---------|
 | ... | ... | ... | ... | ... | ... |
 
-## 注意事項
+## 📚 ドキュメント
 
-- 初回実行時はOGP画像の取得に時間がかかる場合があります
-- 同じ記事は重複して保存されません（リンクで判定）
+プロジェクトの詳細な情報は以下のドキュメントを参照してください:
+
+- **[PROJECT_DOCUMENTATION.md](./PROJECT_DOCUMENTATION.md)** - プロジェクト全体の構成と開発状況
+- **[SETUP.md](./SETUP.md)** - 初期セットアップの詳細手順
+- **[SETUP_OAUTH_ALTERNATIVE.md](./SETUP_OAUTH_ALTERNATIVE.md)** - OAuth認証の代替手順
+- **[SETUP_GITHUB_ACTIONS.md](./SETUP_GITHUB_ACTIONS.md)** - GitHub Actionsの設定方法
+
+## ⚠️ 注意事項
+
+- 初回実行時はAI画像生成に時間がかかります（1件あたり15-30秒）
+- 同じ記事は重複して保存されません（タイトル・リンクで判定）
+- Vercel無料プランでは最大5分の実行時間制限があります
+- Gemini APIのレート制限に注意してください（429エラー時は自動リトライ）
 - 本番環境（Vercel）にデプロイする場合は、環境変数をVercelのダッシュボードで設定してください
