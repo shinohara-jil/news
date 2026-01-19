@@ -11,6 +11,8 @@ on:
 jobs:
   fetch-news:
     runs-on: ubuntu-latest
+    # 一時停止中: 復活する場合は、このif条件を削除してください
+    if: false
 
     steps:
       - name: ニュース取得APIを呼び出し
